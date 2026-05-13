@@ -17,6 +17,7 @@ import com.rosan.installer.data.settings.provider.ThemeStateProviderImpl
 import com.rosan.installer.data.settings.repository.AppRepositoryImpl
 import com.rosan.installer.data.settings.repository.AppSettingsRepositoryImpl
 import com.rosan.installer.data.settings.repository.ConfigRepositoryImpl
+import com.rosan.installer.data.settings.repository.TrustedSignatureRepositoryImpl
 import com.rosan.installer.domain.settings.provider.PrivilegedProvider
 import com.rosan.installer.domain.settings.provider.SystemAppProvider
 import com.rosan.installer.domain.settings.provider.SystemEnvProvider
@@ -24,10 +25,14 @@ import com.rosan.installer.domain.settings.provider.ThemeStateProvider
 import com.rosan.installer.domain.settings.repository.AppRepository
 import com.rosan.installer.domain.settings.repository.AppSettingsRepository
 import com.rosan.installer.domain.settings.repository.ConfigRepository
+import com.rosan.installer.domain.settings.repository.TrustedSignatureRepository
 import com.rosan.installer.domain.settings.usecase.config.GetConfigDraftUseCase
 import com.rosan.installer.domain.settings.usecase.config.GetResolvedConfigUseCase
 import com.rosan.installer.domain.settings.usecase.config.SaveConfigUseCase
 import com.rosan.installer.domain.settings.usecase.config.ToggleAppTargetConfigUseCase
+import com.rosan.installer.domain.settings.usecase.signature.GetTrustedSignaturesUseCase
+import com.rosan.installer.domain.settings.usecase.signature.IsSignatureTrustedUseCase
+import com.rosan.installer.domain.settings.usecase.signature.ManageTrustedSignatureUseCase
 import com.rosan.installer.domain.settings.usecase.settings.GetPackageUidUseCase
 import com.rosan.installer.domain.settings.usecase.settings.ManagePackageListUseCase
 import com.rosan.installer.domain.settings.usecase.settings.ManageSharedUidListUseCase
@@ -47,9 +52,11 @@ val settingsModule = module {
 
     single { get<InstallerRoom>().appDao }
     single { get<InstallerRoom>().configDao }
+    single { get<InstallerRoom>().trustedSignatureDao }
 
     singleOf(::AppRepositoryImpl) { bind<AppRepository>() }
     singleOf(::ConfigRepositoryImpl) { bind<ConfigRepository>() }
+    singleOf(::TrustedSignatureRepositoryImpl) { bind<TrustedSignatureRepository>() }
 
     single(createdAtStart = true) {
         DatabaseInitializer(
@@ -101,4 +108,7 @@ val settingsModule = module {
     factoryOf(::ManagePackageListUseCase)
     factoryOf(::ManageSharedUidListUseCase)
     factoryOf(::GetPackageUidUseCase)
+    factoryOf(::GetTrustedSignaturesUseCase)
+    factoryOf(::ManageTrustedSignatureUseCase)
+    factoryOf(::IsSignatureTrustedUseCase)
 }

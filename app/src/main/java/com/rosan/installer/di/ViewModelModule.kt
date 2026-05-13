@@ -15,6 +15,7 @@ import com.rosan.installer.ui.page.main.settings.preferred.installer.InstallerSe
 import com.rosan.installer.ui.page.main.settings.preferred.installer.dialog.DialogSettingsViewModel
 import com.rosan.installer.ui.page.main.settings.preferred.installer.notification.NotificationSettingsViewModel
 import com.rosan.installer.ui.page.main.settings.preferred.lab.LabSettingsViewModel
+import com.rosan.installer.ui.page.main.settings.preferred.signature.TrustedSignaturesViewModel
 import com.rosan.installer.ui.page.main.settings.preferred.theme.ThemeSettingsViewModel
 import com.rosan.installer.ui.page.main.settings.preferred.uninstaller.UninstallerSettingsViewModel
 import org.koin.core.module.dsl.viewModel
@@ -33,10 +34,13 @@ val viewModelModule = module {
     viewModelOf(::UninstallerSettingsViewModel)
     viewModelOf(::LabSettingsViewModel)
     viewModelOf(::AboutViewModel)
+    viewModelOf(::TrustedSignaturesViewModel)
 
     viewModel { (session: InstallerSessionRepository) ->
         InstallerViewModel(
             session = session,
+            get(),
+            get(),
             get(),
             get(),
             get(),

@@ -815,4 +815,13 @@
     <string name="exception_initiator_not_visible">Доступ запрещен из-за ограничений видимости пакета. Приложение, запрашивающее установку, скрыто от InstallerX. Если вы используете такие модули, как \'Скрыть мой список приложений\', добавьте InstallerX в список разрешенных</string>
     <string name="signature_shared_apps">Приложения с той же подписью</string>
     <string name="signature_no_shared_apps">Других приложений с такой подписью не найдено</string>
+    <string name="trusted_signatures">Доверенные подписи</string>
+    <string name="trusted_signatures_desc">Управление доверенными сертификатами приложений</string>
+    <string name="trusted_signatures_empty">Доверенные подписи еще не добавлены</string>
+    <string name="trusted_signatures_add">Добавить доверенную подпись</string>
+    <string name="trusted_signatures_delete_confirm">Удалить доверенную подпись \'%1$s\'?</string>
+    <string name="signature_trust_status">Статус доверия</string>
+    <string name="signature_trusted">Доверенная</string>
+    <string name="signature_not_trusted">Недоверенная</string>
+    <string name="signature_trust_action">Доверять этой подписи</string>
 </resources>

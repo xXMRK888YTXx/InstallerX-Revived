@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.ArrowDropDown
 import androidx.compose.material.icons.twotone.PermDeviceInformation
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -32,6 +33,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -670,6 +673,12 @@ private fun signatureSubMenu(
                         .heightIn(max = 400.dp),
                 ) {
                     item {
+                        SignatureTrustCard(
+                            isTrusted = signatureInfo.isTrusted,
+                            onTrustClick = { viewModel.dispatch(InstallerViewAction.TrustSignature) }
+                        )
+                    }
+                    item {
                         SignatureCard(
                             title = stringResource(R.string.signature_sha256),
                             value = signatureInfo.sha256
@@ -772,6 +781,59 @@ private fun signatureSubMenu(
                 viewModel.dispatch(InstallerViewAction.InstallExtendedMenu)
             })
         })
+}
+
+@Composable
+fun SignatureTrustCard(
+    isTrusted: Boolean,
+    onTrustClick: () -> Unit
+) {
+    val containerColor = if (isTrusted)
+        MaterialTheme.colorScheme.primaryContainer
+    else
+        MaterialTheme.colorScheme.errorContainer
+
+    val contentColor = MaterialTheme.colorScheme.contentColorFor(containerColor)
+    val variantContentColor = contentColor.copy(alpha = 0.7f)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.signature_trust_status),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = variantContentColor,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(if (isTrusted) R.string.signature_trusted else R.string.signature_not_trusted),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    color = contentColor,
+                )
+            }
+            if (!isTrusted) {
+                TextButton(
+                    onClick = onTrustClick,
+                    colors = ButtonDefaults.textButtonColors(contentColor = contentColor)
+                ) {
+                    Text(stringResource(R.string.signature_trust_action))
+                }
+            }
+        }
+    }
 }
 
 @Composable

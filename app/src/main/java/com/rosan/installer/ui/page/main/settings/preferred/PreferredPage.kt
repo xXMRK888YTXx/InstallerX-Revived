@@ -210,6 +210,16 @@ fun PreferredPage(
                     title = stringResource(R.string.basic)
                 ) {
                     item {
+                        SettingsNavigationItemWidget(
+                            icon = AppIcons.Rule,
+                            title = stringResource(R.string.trusted_signatures),
+                            description = stringResource(R.string.trusted_signatures_desc),
+                            onClick = {
+                                navigator.push(Route.TrustedSignatures)
+                            }
+                        )
+                    }
+                    item {
                         DisableAdbVerify(
                             checked = !uiState.adbVerifyEnabled,
                             isError = uiState.authorizer == Authorizer.Dhizuku,

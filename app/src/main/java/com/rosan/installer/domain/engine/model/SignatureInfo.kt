@@ -16,5 +16,6 @@ data class SignatureInfo(
     val notBefore: Long,
     val algorithm: String,
     val isLoadingApps: Boolean = false,
-    val appsWithSameSignature: List<NamedPackage> = emptyList()
+    val appsWithSameSignature: List<NamedPackage> = emptyList(),
+    val isTrusted: Boolean = false
 )

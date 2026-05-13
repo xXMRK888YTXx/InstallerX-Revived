@@ -671,6 +671,15 @@
     <string name="signature_algorithm">Algorithm</string>
     <string name="signature_shared_apps">Apps with same signature</string>
     <string name="signature_no_shared_apps">No other apps found with this signature</string>
+    <string name="trusted_signatures">Trusted Signatures</string>
+    <string name="trusted_signatures_desc">Manage trusted app certificates</string>
+    <string name="trusted_signatures_empty">No trusted signatures added yet</string>
+    <string name="trusted_signatures_add">Add Trusted Signature</string>
+    <string name="trusted_signatures_delete_confirm">Delete trusted signature \'%1$s\'?</string>
+    <string name="signature_trust_status">Trust Status</string>
+    <string name="signature_trusted">Trusted</string>
+    <string name="signature_not_trusted">Not Trusted</string>
+    <string name="signature_trust_action">Trust this signature</string>
     <string name="installer_oppo_related">OPPO related</string>
     <string name="installer_show_oem_special">Show OEM extra info</string>
     <string name="installer_show_oem_special_desc">Analyse and show some specific value for oem apk(s) on install dialog</string>

@@ -17,6 +17,7 @@ sealed interface InstallerViewAction {
     data object InstallChoice : InstallerViewAction
     data object InstallExtendedMenu : InstallerViewAction
     data class InstallExtendedSubMenu(val id: InstallExtendedSubMenuId) : InstallerViewAction
+    data object TrustSignature : InstallerViewAction
 
     /**
      * Install multiple module/apk

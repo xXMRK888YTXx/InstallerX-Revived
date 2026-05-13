@@ -18,6 +18,8 @@ import com.rosan.installer.domain.engine.usecase.GetAppIconColorUseCase
 import com.rosan.installer.domain.engine.usecase.GetAppIconUseCase
 import com.rosan.installer.domain.engine.usecase.GetAppLabelUseCase
 import com.rosan.installer.domain.engine.usecase.GetAppsWithSignatureUseCase
+import com.rosan.installer.domain.settings.usecase.signature.IsSignatureTrustedUseCase
+import com.rosan.installer.domain.settings.usecase.signature.ManageTrustedSignatureUseCase
 import com.rosan.installer.domain.privileged.usecase.GetAvailableUsersUseCase
 import com.rosan.installer.domain.session.model.ProgressEntity
 import com.rosan.installer.domain.session.model.SelectInstallEntity
@@ -56,7 +58,9 @@ class InstallerViewModel(
     private val getAppIcon: GetAppIconUseCase,
     private val getAppIconColor: GetAppIconColorUseCase,
     private val getAppLabel: GetAppLabelUseCase,
-    private val getAppsWithSignature: GetAppsWithSignatureUseCase
+    private val getAppsWithSignature: GetAppsWithSignatureUseCase,
+    private val isSignatureTrusted: IsSignatureTrustedUseCase,
+    private val manageTrustedSignature: ManageTrustedSignatureUseCase
 ) : ViewModel() {
 
     // Event channel for one-off side effects (e.g. Toasts)
@@ -169,6 +173,7 @@ class InstallerViewModel(
             is InstallerViewAction.InstallPrepare -> installPrepare()
             is InstallerViewAction.InstallExtendedMenu -> installExtendedMenu()
             is InstallerViewAction.InstallExtendedSubMenu -> installExtendedSubMenu(action.id)
+            is InstallerViewAction.TrustSignature -> trustSignature()
             is InstallerViewAction.InstallMultiple -> installMultiple()
             is InstallerViewAction.Install -> install()
             is InstallerViewAction.Background -> background()
@@ -614,13 +619,17 @@ class InstallerViewModel(
 
                 if (signatureHash != null) {
                     viewModelScope.launch {
+                        val isTrusted = isSignatureTrusted(signatureHash)
                         _localState.update { currentState ->
                             val updatedResults = currentState.analysisResults.map { result ->
                                 if (result.packageName == currentPackageName) {
                                     val updatedEntities = result.appEntities.map { wrapper ->
                                         val app = wrapper.app
                                         if (app is AppEntity.BaseEntity && app.signatureHash == signatureHash) {
-                                            wrapper.copy(app = app.copy(signatureInfo = app.signatureInfo?.copy(isLoadingApps = true)))
+                                            wrapper.copy(app = app.copy(signatureInfo = app.signatureInfo?.copy(
+                                                isLoadingApps = true,
+                                                isTrusted = isTrusted
+                                            )))
                                         } else wrapper
                                     }
                                     result.copy(appEntities = updatedEntities)
@@ -653,6 +662,34 @@ class InstallerViewModel(
             }
             _localState.update { it.copy(stage = InstallerStage.InstallExtendedSubMenu(id)) }
         } else toast(R.string.error_dialog_install_menu_not_available)
+    }
+
+    private fun trustSignature() {
+        val currentPackageName = _localState.value.currentPackageName
+        val currentResult = _localState.value.analysisResults.find { it.packageName == currentPackageName }
+        val entity = currentResult?.appEntities?.find { it.selected }?.app as? AppEntity.BaseEntity
+        val signatureHash = entity?.signatureHash
+        val signatureName = entity?.label ?: entity?.packageName ?: "Unknown"
+
+        if (signatureHash != null) {
+            viewModelScope.launch {
+                manageTrustedSignature.add(signatureName, signatureHash)
+                _localState.update { currentState ->
+                    val updatedResults = currentState.analysisResults.map { result ->
+                        if (result.packageName == currentPackageName) {
+                            val updatedEntities = result.appEntities.map { wrapper ->
+                                val app = wrapper.app
+                                if (app is AppEntity.BaseEntity && app.signatureHash == signatureHash) {
+                                    wrapper.copy(app = app.copy(signatureInfo = app.signatureInfo?.copy(isTrusted = true)))
+                                } else wrapper
+                            }
+                            result.copy(appEntities = updatedEntities)
+                        } else result
+                    }
+                    currentState.copy(analysisResults = updatedResults)
+                }
+            }
+        }
     }
 
     private fun install() {

@@ -44,6 +44,7 @@ import com.rosan.installer.ui.page.main.settings.preferred.installer.InstallerGl
 import com.rosan.installer.ui.page.main.settings.preferred.installer.dialog.DialogSettingsPage
 import com.rosan.installer.ui.page.main.settings.preferred.installer.notification.NotificationSettingsPage
 import com.rosan.installer.ui.page.main.settings.preferred.lab.LabPage
+import com.rosan.installer.ui.page.main.settings.preferred.signature.TrustedSignaturesPage
 import com.rosan.installer.ui.page.main.settings.preferred.theme.ThemeSettingsPage
 import com.rosan.installer.ui.page.main.settings.preferred.uninstaller.UninstallerGlobalSettingsPage
 import com.rosan.installer.ui.page.miuix.settings.config.apply.MiuixApplyPage
@@ -214,6 +215,10 @@ fun InstallerNavContainer(uiState: ThemeState) {
                         } else {
                             LabPage(useBlur)
                         }
+                    }
+                    entry<Route.TrustedSignatures> {
+                        // Assuming no Miuix page for this yet, fallback to standard
+                        TrustedSignaturesPage(useBlur)
                     }
                     entry<Route.DefaultInstaller> {
                         if (uiState.useMiuix) {
