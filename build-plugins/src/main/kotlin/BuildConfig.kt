@@ -37,6 +37,5 @@ fun Project.getGitDate(): String {
 
 // Combine the manual version name or dynamic git date
 fun Project.getBaseVersionName(): String {
-    val manualVersionName = findProperty("VERSION_NAME") as String?
-    return manualVersionName ?: getGitDate()
+    return "fork.xxmrk888ytxx.13-05.26"
 }

@@ -38,6 +38,7 @@ android {
         // Version control retrieved from build-plugins/BuildConfig.kt
         versionCode = BuildConfig.VERSION_CODE
         versionName = project.getBaseVersionName()
+        applicationIdSuffix = "fork.xxmrk888ytxx"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
