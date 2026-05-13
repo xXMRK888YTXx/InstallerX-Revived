@@ -5,6 +5,8 @@ package com.rosan.installer.ui.page.main.installer
 import android.graphics.Bitmap
 import com.rosan.installer.domain.session.model.InstallResult
 
+import com.rosan.installer.ui.page.main.installer.dialog.inner.InstallExtendedSubMenuId
+
 sealed class InstallerStage {
     data object Ready : InstallerStage()
 
@@ -20,7 +22,7 @@ sealed class InstallerStage {
     data object InstallChoice : InstallerStage()
     data object InstallPrepare : InstallerStage()
     data object InstallExtendedMenu : InstallerStage()
-    data object InstallExtendedSubMenu : InstallerStage()
+    data class InstallExtendedSubMenu(val id: InstallExtendedSubMenuId) : InstallerStage()
     data class Installing(val progress: Float, val current: Int, val total: Int, val appLabel: String?) : InstallerStage()
     data class InstallingModule(val output: List<String>, val isFinished: Boolean = false) : InstallerStage()
     data object InstallSuccess : InstallerStage()

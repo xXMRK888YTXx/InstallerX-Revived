@@ -50,12 +50,9 @@ dependencyResolutionManagement {
                 .orElse(providers.environmentVariable("GITHUB_TOKEN"))
 
             if (gprUser.isPresent && gprKey.isPresent) {
-                maven {
-                    url = uri("https://maven.pkg.github.com/compose-miuix-ui/miuix")
-                    credentials {
-                        username = gprUser.get()
-                        password = gprKey.get()
-                    }
+                credentials {
+                    username = gprUser.get()
+                    password = gprKey.get()
                 }
             }
         }

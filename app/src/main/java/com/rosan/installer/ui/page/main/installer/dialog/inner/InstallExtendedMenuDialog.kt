@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -55,6 +56,7 @@ import com.rosan.installer.domain.settings.model.Authorizer
 import com.rosan.installer.domain.settings.model.InstallerMode
 import com.rosan.installer.domain.settings.model.NamedPackage
 import com.rosan.installer.ui.icons.AppIcons
+import com.rosan.installer.ui.page.main.installer.InstallerStage
 import com.rosan.installer.ui.page.main.installer.InstallerViewAction
 import com.rosan.installer.ui.page.main.installer.InstallerViewModel
 import com.rosan.installer.ui.page.main.installer.components.permissionIcon
@@ -112,7 +114,7 @@ fun installExtendedMenuDialog(
     ) {
         buildList {
             // Permission List
-            if (containerType == DataType.APK)
+            if (containerType == DataType.APK) {
                 add(
                     ExtendedMenuEntity(
                         action = InstallExtendedMenuAction.PermissionList,
@@ -125,6 +127,19 @@ fun installExtendedMenuDialog(
                         )
                     )
                 )
+                add(
+                    ExtendedMenuEntity(
+                        action = InstallExtendedMenuAction.SignatureInfo,
+                        subMenuId = InstallExtendedSubMenuId.SignatureInfo,
+                        menuItem = ExtendedMenuItemEntity(
+                            nameResourceId = R.string.signature_info,
+                            descriptionResourceId = R.string.signature_info_desc,
+                            icon = AppIcons.Rule,
+                            action = null
+                        )
+                    )
+                )
+            }
 
             // Installer Mode selection (Always shown for Root/Shizuku)
             if (authorizer == Authorizer.Root || authorizer == Authorizer.Shizuku)
@@ -461,13 +476,10 @@ fun MenuItemWidget(
                         shape = shape,
                         onClick = {
                             when (item.action) {
-                                is InstallExtendedMenuAction.PermissionList ->
-                                    when (item.subMenuId) {
-                                        InstallExtendedSubMenuId.PermissionList -> {
-                                            viewmodel.dispatch(InstallerViewAction.InstallExtendedSubMenu)
-                                        }
-
-                                        else -> {}
+                                is InstallExtendedMenuAction.PermissionList,
+                                is InstallExtendedMenuAction.SignatureInfo ->
+                                    item.subMenuId?.let { id ->
+                                        viewmodel.dispatch(InstallerViewAction.InstallExtendedSubMenu(id))
                                     }
 
                                 is InstallExtendedMenuAction.InstallOption -> {
@@ -499,6 +511,7 @@ fun MenuItemWidget(
                             ) {
                                 when (item.action) {
                                     is InstallExtendedMenuAction.PermissionList,
+                                    is InstallExtendedMenuAction.SignatureInfo,
                                     is InstallExtendedMenuAction.CustomizeInstaller,
                                     is InstallExtendedMenuAction.CustomizeUser ->
                                         Icon(
@@ -558,6 +571,24 @@ fun installExtendedMenuSubMenuDialog(
         ?.map { it.app }
         ?.sortedBest()
         ?.firstOrNull()
+
+    return when (val stage = uiState.stage) {
+        is InstallerStage.InstallExtendedSubMenu -> {
+            when (stage.id) {
+                InstallExtendedSubMenuId.PermissionList -> permissionSubMenu(viewModel, entity)
+                InstallExtendedSubMenuId.SignatureInfo -> signatureSubMenu(viewModel, entity)
+            }
+        }
+
+        else -> permissionSubMenu(viewModel, entity) // Fallback
+    }
+}
+
+@Composable
+private fun permissionSubMenu(
+    viewModel: InstallerViewModel,
+    entity: AppEntity?
+): DialogParams {
     val permissionList = remember(entity) {
         (entity as? AppEntity.BaseEntity)?.permissions?.sorted()?.toMutableStateList()
             ?: mutableStateListOf()
@@ -581,7 +612,6 @@ fun installExtendedMenuSubMenuDialog(
                 itemsIndexed(permissionList) { _, permission ->
                     PermissionCard(
                         permission = permission,
-                        // Note: If you need to read selection state from viewmodel later, use uiState here
                         isHighlight = false
                     )
                 }
@@ -595,6 +625,146 @@ fun installExtendedMenuSubMenuDialog(
                 viewModel.dispatch(InstallerViewAction.InstallExtendedMenu)
             })
         })
+}
+
+@Composable
+private fun signatureSubMenu(
+    viewModel: InstallerViewModel,
+    entity: AppEntity?
+): DialogParams {
+    val signatureInfo = (entity as? AppEntity.BaseEntity)?.signatureInfo
+
+    return DialogParams(
+        icon = DialogInnerParams(DialogParamsType.IconMenu.id, {
+            Icon(
+                imageVector = AppIcons.Rule,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+        }),
+        title = DialogInnerParams(
+            DialogParamsType.InstallExtendedSubMenu.id,
+        ) {
+            Text(stringResource(R.string.signature_info))
+        },
+        content = DialogInnerParams(
+            DialogParamsType.InstallExtendedSubMenu.id
+        ) {
+            if (signatureInfo != null) {
+                val context = LocalContext.current
+                val dateFormat = remember { android.text.format.DateFormat.getMediumDateFormat(context) }
+                val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
+
+                fun formatDateTime(millis: Long): String {
+                    val date = java.util.Date(millis)
+                    return "${dateFormat.format(date)} ${timeFormat.format(date)}"
+                }
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 0.dp)
+                        .heightIn(max = 400.dp),
+                ) {
+                    item {
+                        SignatureCard(
+                            title = stringResource(R.string.signature_sha256),
+                            value = signatureInfo.sha256
+                        )
+                    }
+                    item {
+                        SignatureCard(
+                            title = stringResource(R.string.signature_sha1),
+                            value = signatureInfo.sha1
+                        )
+                    }
+                    item {
+                        SignatureCard(
+                            title = stringResource(R.string.signature_md5),
+                            value = signatureInfo.md5
+                        )
+                    }
+                    item {
+                        SignatureCard(
+                            title = stringResource(R.string.signature_issuer),
+                            value = signatureInfo.issuer
+                        )
+                    }
+                    item {
+                        SignatureCard(
+                            title = stringResource(R.string.signature_subject),
+                            value = signatureInfo.subject
+                        )
+                    }
+                    item {
+                        SignatureCard(
+                            title = stringResource(R.string.signature_validity),
+                            value = stringResource(
+                                R.string.signature_validity_format,
+                                formatDateTime(signatureInfo.notBefore),
+                                formatDateTime(signatureInfo.expiration)
+                            )
+                        )
+                    }
+                    item {
+                        SignatureCard(
+                            title = stringResource(R.string.signature_algorithm),
+                            value = signatureInfo.algorithm
+                        )
+                    }
+                    item { Spacer(modifier = Modifier.size(1.dp)) }
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(stringResource(R.string.installer_prepare_signature_unknown))
+                }
+            }
+        },
+        buttons = dialogButtons(
+            DialogParamsType.InstallExtendedSubMenu.id
+        ) {
+            listOf(DialogButton(stringResource(R.string.previous)) {
+                viewModel.dispatch(InstallerViewAction.InstallExtendedMenu)
+            })
+        })
+}
+
+@Composable
+fun SignatureCard(
+    title: String,
+    value: String,
+) {
+    val containerColor = MaterialTheme.colorScheme.surfaceContainer
+    val contentColor = MaterialTheme.colorScheme.contentColorFor(containerColor)
+    val variantContentColor = contentColor.copy(alpha = 0.7f)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = variantContentColor,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = contentColor,
+            )
+        }
+    }
 }
 
 @Composable

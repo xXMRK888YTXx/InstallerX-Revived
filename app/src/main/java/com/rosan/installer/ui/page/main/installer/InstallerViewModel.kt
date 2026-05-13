@@ -27,6 +27,7 @@ import com.rosan.installer.domain.settings.model.InstallMode
 import com.rosan.installer.domain.settings.model.InstallerMode
 import com.rosan.installer.domain.settings.repository.AppSettingsRepository
 import com.rosan.installer.domain.settings.repository.BooleanSetting
+import com.rosan.installer.ui.page.main.installer.dialog.inner.InstallExtendedSubMenuId
 import com.rosan.installer.util.addFlag
 import com.rosan.installer.util.hasFlag
 import com.rosan.installer.util.removeFlag
@@ -165,7 +166,7 @@ class InstallerViewModel(
 
             is InstallerViewAction.InstallPrepare -> installPrepare()
             is InstallerViewAction.InstallExtendedMenu -> installExtendedMenu()
-            is InstallerViewAction.InstallExtendedSubMenu -> installExtendedSubMenu()
+            is InstallerViewAction.InstallExtendedSubMenu -> installExtendedSubMenu(action.id)
             is InstallerViewAction.InstallMultiple -> installMultiple()
             is InstallerViewAction.Install -> install()
             is InstallerViewAction.Background -> background()
@@ -592,19 +593,18 @@ class InstallerViewModel(
     }
 
     private fun installExtendedMenu() {
-        if (_localState.value.stage in listOf(
-                InstallerStage.InstallPrepare,
-                InstallerStage.InstallExtendedSubMenu,
-                InstallerStage.InstallFailed
-            )
+        val currentStage = _localState.value.stage
+        if (currentStage is InstallerStage.InstallPrepare ||
+            currentStage is InstallerStage.InstallExtendedSubMenu ||
+            currentStage is InstallerStage.InstallFailed
         ) {
             _localState.update { it.copy(stage = InstallerStage.InstallExtendedMenu) }
         } else toast(R.string.error_dialog_install_menu_not_available)
     }
 
-    private fun installExtendedSubMenu() {
+    private fun installExtendedSubMenu(id: InstallExtendedSubMenuId) {
         if (_localState.value.stage is InstallerStage.InstallExtendedMenu) {
-            _localState.update { it.copy(stage = InstallerStage.InstallExtendedSubMenu) }
+            _localState.update { it.copy(stage = InstallerStage.InstallExtendedSubMenu(id)) }
         } else toast(R.string.error_dialog_install_menu_not_available)
     }
 

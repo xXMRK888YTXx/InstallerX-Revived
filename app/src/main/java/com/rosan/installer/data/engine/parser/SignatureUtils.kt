@@ -10,13 +10,19 @@ import android.os.Build
 import timber.log.Timber
 import java.security.MessageDigest
 
+import com.rosan.installer.domain.engine.model.SignatureInfo
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+
 /**
  * A utility object for extracting and hashing application signatures.
  * REFACTORED to handle unconventional file paths like file descriptors.
  */
 object SignatureUtils {
 
-    private const val HASH_ALGORITHM = "SHA-256"
+    private const val HASH_ALGORITHM_SHA256 = "SHA-256"
+    private const val HASH_ALGORITHM_SHA1 = "SHA-1"
+    private const val HASH_ALGORITHM_MD5 = "MD5"
 
     /**
      * Gets the signature hash from an APK file path.
@@ -27,13 +33,44 @@ object SignatureUtils {
      */
     fun getApkSignatureHash(context: Context, apkPath: String): String? {
         return try {
-            // Now calls a dedicated helper for archive files.
             val packageInfo = getPackageArchiveInfoFromPath(context, apkPath)
             val signature = getFirstSignature(packageInfo)
-            signature?.let { hashSignature(it) }
+            signature?.let { hashSignature(it, HASH_ALGORITHM_SHA256) }
         } catch (e: Exception) {
-            // This will catch any exceptions, including the previous NameNotFoundException if something is wrong.
             Timber.e(e, "Failed to get signature hash from APK: $apkPath")
+            null
+        }
+    }
+
+    fun getApkSignatureInfo(context: Context, apkPath: String): SignatureInfo? {
+        return try {
+            val packageInfo = getPackageArchiveInfoFromPath(context, apkPath)
+            val signature = getFirstSignature(packageInfo)
+            signature?.let { extractSignatureInfo(it) }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to get signature info from APK: $apkPath")
+            null
+        }
+    }
+
+    private fun extractSignatureInfo(signature: Signature): SignatureInfo? {
+        return try {
+            val certBytes = signature.toByteArray()
+            val cf = CertificateFactory.getInstance("X509")
+            val cert = cf.generateCertificate(certBytes.inputStream()) as X509Certificate
+
+            SignatureInfo(
+                sha1 = hashBytes(certBytes, HASH_ALGORITHM_SHA1),
+                sha256 = hashBytes(certBytes, HASH_ALGORITHM_SHA256),
+                md5 = hashBytes(certBytes, HASH_ALGORITHM_MD5),
+                issuer = cert.issuerX500Principal.name,
+                subject = cert.subjectX500Principal.name,
+                expiration = cert.notAfter.time,
+                notBefore = cert.notBefore.time,
+                algorithm = cert.sigAlgName
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to extract X509 info from signature")
             null
         }
     }
@@ -47,28 +84,25 @@ object SignatureUtils {
      */
     fun getInstalledAppSignatureHash(context: Context, packageName: String): String? {
         return try {
-            // MODIFIED: Now calls a dedicated helper for installed packages.
             val packageInfo = getInstalledPackageInfo(context, packageName)
             val signature = getFirstSignature(packageInfo)
-            signature?.let { hashSignature(it) }
+            signature?.let { hashSignature(it, HASH_ALGORITHM_SHA256) }
         } catch (e: PackageManager.NameNotFoundException) {
             Timber.d("Package not found, can't get signature: $packageName")
-            null // This is an expected case, not an error.
+            null
         } catch (e: Exception) {
             Timber.e(e, "Failed to get signature hash for installed package: $packageName")
             null
         }
     }
 
-    /**
-     * Hashes a Signature object using SHA-256.
-     *
-     * @param signature The signature to hash.
-     * @return A hex string representation of the hash.
-     */
-    private fun hashSignature(signature: Signature): String {
-        val digest = MessageDigest.getInstance(HASH_ALGORITHM)
-        val hashBytes = digest.digest(signature.toByteArray())
+    private fun hashSignature(signature: Signature, algorithm: String): String {
+        return hashBytes(signature.toByteArray(), algorithm)
+    }
+
+    private fun hashBytes(bytes: ByteArray, algorithm: String): String {
+        val digest = MessageDigest.getInstance(algorithm)
+        val hashBytes = digest.digest(bytes)
         return hashBytes.joinToString("") { "%02x".format(it) }
     }
 

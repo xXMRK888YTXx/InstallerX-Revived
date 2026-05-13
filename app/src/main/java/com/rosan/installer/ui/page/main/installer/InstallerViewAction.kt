@@ -8,13 +8,15 @@ import com.rosan.installer.domain.session.model.SelectInstallEntity
 import com.rosan.installer.domain.session.repository.InstallerSessionRepository
 import com.rosan.installer.domain.settings.model.InstallerMode
 
+import com.rosan.installer.ui.page.main.installer.dialog.inner.InstallExtendedSubMenuId
+
 sealed interface InstallerViewAction {
     data class CollectSession(val session: InstallerSessionRepository) : InstallerViewAction
     data object Close : InstallerViewAction
     data object Analyse : InstallerViewAction
     data object InstallChoice : InstallerViewAction
     data object InstallExtendedMenu : InstallerViewAction
-    data object InstallExtendedSubMenu : InstallerViewAction
+    data class InstallExtendedSubMenu(val id: InstallExtendedSubMenuId) : InstallerViewAction
 
     /**
      * Install multiple module/apk

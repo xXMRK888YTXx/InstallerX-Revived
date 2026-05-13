@@ -4,6 +4,7 @@ package com.rosan.installer.ui.page.main.installer.dialog.inner
 
 sealed interface InstallExtendedMenuAction {
     data object PermissionList : InstallExtendedMenuAction
+    data object SignatureInfo : InstallExtendedMenuAction
     data object CustomizeRequester : InstallExtendedMenuAction
     data object CustomizeInstallerMode : InstallExtendedMenuAction
     data object CustomizeInstaller : InstallExtendedMenuAction
@@ -14,4 +15,5 @@ sealed interface InstallExtendedMenuAction {
 
 sealed class InstallExtendedSubMenuId(val id: String) {
     data object PermissionList : InstallExtendedSubMenuId("permission_list")
+    data object SignatureInfo: InstallExtendedSubMenuId("signature_info")
 }

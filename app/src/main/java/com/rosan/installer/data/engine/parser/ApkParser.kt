@@ -194,6 +194,9 @@ class ApkParser(
         val signatureHash = (data as? DataEntity.FileEntity)?.path?.let {
             SignatureUtils.getApkSignatureHash(context, it)
         }
+        val signatureInfo = (data as? DataEntity.FileEntity)?.path?.let {
+            SignatureUtils.getApkSignatureInfo(context, it)
+        }
 
         // Variables for Xposed extraction
         val metaDataMap = mutableMapOf<String, String>()
@@ -309,7 +312,8 @@ class ApkParser(
             arch = arch,
             permissions = permissions,
             sourceType = extra.dataType,
-            signatureHash = signatureHash
+            signatureHash = signatureHash,
+            signatureInfo = signatureInfo
         ) else {
             val metadata = splitName.parseSplitMetadata()
             AppEntity.SplitEntity(

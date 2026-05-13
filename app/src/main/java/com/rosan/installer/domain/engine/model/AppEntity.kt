@@ -37,6 +37,7 @@ sealed class AppEntity {
         // Get from AndroidManifest.xml
         val permissions: List<String>? = null,
         val signatureHash: String? = null,
+        val signatureInfo: SignatureInfo? = null,
         val fileHash: String? = null
     ) : AppEntity() {
         val isXposedModule: Boolean
