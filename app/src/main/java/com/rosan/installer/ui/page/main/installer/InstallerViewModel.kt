@@ -17,6 +17,7 @@ import com.rosan.installer.domain.engine.model.sourcePath
 import com.rosan.installer.domain.engine.usecase.GetAppIconColorUseCase
 import com.rosan.installer.domain.engine.usecase.GetAppIconUseCase
 import com.rosan.installer.domain.engine.usecase.GetAppLabelUseCase
+import com.rosan.installer.domain.engine.usecase.GetAppsWithSignatureUseCase
 import com.rosan.installer.domain.privileged.usecase.GetAvailableUsersUseCase
 import com.rosan.installer.domain.session.model.ProgressEntity
 import com.rosan.installer.domain.session.model.SelectInstallEntity
@@ -54,7 +55,8 @@ class InstallerViewModel(
     private val getAvailableUsers: GetAvailableUsersUseCase,
     private val getAppIcon: GetAppIconUseCase,
     private val getAppIconColor: GetAppIconColorUseCase,
-    private val getAppLabel: GetAppLabelUseCase
+    private val getAppLabel: GetAppLabelUseCase,
+    private val getAppsWithSignature: GetAppsWithSignatureUseCase
 ) : ViewModel() {
 
     // Event channel for one-off side effects (e.g. Toasts)
@@ -604,6 +606,51 @@ class InstallerViewModel(
 
     private fun installExtendedSubMenu(id: InstallExtendedSubMenuId) {
         if (_localState.value.stage is InstallerStage.InstallExtendedMenu) {
+            if (id == InstallExtendedSubMenuId.SignatureInfo) {
+                val currentPackageName = _localState.value.currentPackageName
+                val currentResult = _localState.value.analysisResults.find { it.packageName == currentPackageName }
+                val entity = currentResult?.appEntities?.find { it.selected }?.app as? AppEntity.BaseEntity
+                val signatureHash = entity?.signatureHash
+
+                if (signatureHash != null) {
+                    viewModelScope.launch {
+                        _localState.update { currentState ->
+                            val updatedResults = currentState.analysisResults.map { result ->
+                                if (result.packageName == currentPackageName) {
+                                    val updatedEntities = result.appEntities.map { wrapper ->
+                                        val app = wrapper.app
+                                        if (app is AppEntity.BaseEntity && app.signatureHash == signatureHash) {
+                                            wrapper.copy(app = app.copy(signatureInfo = app.signatureInfo?.copy(isLoadingApps = true)))
+                                        } else wrapper
+                                    }
+                                    result.copy(appEntities = updatedEntities)
+                                } else result
+                            }
+                            currentState.copy(analysisResults = updatedResults)
+                        }
+
+                        val sharedApps = getAppsWithSignature(signatureHash)
+
+                        _localState.update { currentState ->
+                            val updatedResults = currentState.analysisResults.map { result ->
+                                if (result.packageName == currentPackageName) {
+                                    val updatedEntities = result.appEntities.map { wrapper ->
+                                        val app = wrapper.app
+                                        if (app is AppEntity.BaseEntity && app.signatureHash == signatureHash) {
+                                            wrapper.copy(app = app.copy(signatureInfo = app.signatureInfo?.copy(
+                                                isLoadingApps = false,
+                                                appsWithSameSignature = sharedApps
+                                            )))
+                                        } else wrapper
+                                    }
+                                    result.copy(appEntities = updatedEntities)
+                                } else result
+                            }
+                            currentState.copy(analysisResults = updatedResults)
+                        }
+                    }
+                }
+            }
             _localState.update { it.copy(stage = InstallerStage.InstallExtendedSubMenu(id)) }
         } else toast(R.string.error_dialog_install_menu_not_available)
     }

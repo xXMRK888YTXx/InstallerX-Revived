@@ -669,6 +669,8 @@
     <string name="signature_validity">Validity</string>
     <string name="signature_validity_format">%1$s to %2$s</string>
     <string name="signature_algorithm">Algorithm</string>
+    <string name="signature_shared_apps">Apps with same signature</string>
+    <string name="signature_no_shared_apps">No other apps found with this signature</string>
     <string name="installer_oppo_related">OPPO related</string>
     <string name="installer_show_oem_special">Show OEM extra info</string>
     <string name="installer_show_oem_special_desc">Analyse and show some specific value for oem apk(s) on install dialog</string>
